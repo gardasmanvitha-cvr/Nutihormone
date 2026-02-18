@@ -1,0 +1,150 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>Cycle Tracker | NutriHormone</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+
+  <!-- Tailwind -->
+  <script src="https://cdn.tailwindcss.com"></script>
+
+  <!-- Icons -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+</head>
+
+<body class="bg-gradient-to-br from-rose-50 via-white to-emerald-50 text-slate-800">
+
+<!-- HEADER -->
+<header class="max-w-7xl mx-auto px-6 py-6 flex justify-between items-center">
+  <h1 class="text-2xl font-bold text-emerald-600">NutriHormone</h1>
+  <a href="/dashboard" class="text-sm text-slate-600 hover:text-emerald-600">Back to Dashboard</a>
+</header>
+
+<!-- MAIN -->
+<main class="max-w-6xl mx-auto px-6 py-10 grid md:grid-cols-2 gap-12 items-start">
+
+  <!-- LEFT: INPUT CARD -->
+  <section class="bg-white rounded-3xl shadow-lg p-8">
+    <h2 class="text-2xl font-semibold mb-4">Cycle Tracking</h2>
+    <p class="text-slate-500 mb-8">
+      Track your menstrual cycle to better understand patterns, regularity,
+      and wellness insights. This tool is educational and supportive.
+    </p>
+
+    <form id="cycleForm" class="space-y-6">
+      <div>
+        <label class="block text-sm font-medium mb-1">
+          First day of your last period
+        </label>
+        <input type="date" id="lastPeriod"
+          required
+          class="w-full p-3 rounded-xl border border-slate-200 focus:ring-2 focus:ring-rose-300 outline-none" />
+      </div>
+
+      <div>
+        <label class="block text-sm font-medium mb-1">
+          Average cycle length (days)
+        </label>
+        <input type="number" id="cycleLength"
+          min="21" max="35" value="28"
+          class="w-full p-3 rounded-xl border border-slate-200 focus:ring-2 focus:ring-rose-300 outline-none" />
+        <p class="text-xs text-slate-400 mt-1">
+          Typical range is 21–35 days
+        </p>
+      </div>
+
+      <button
+        type="submit"
+        class="w-full bg-rose-500 hover:bg-rose-600 text-white py-3 rounded-xl font-semibold transition">
+        Track My Cycle
+      </button>
+    </form>
+  </section>
+
+  <!-- RIGHT: CALENDAR + RESULTS -->
+  <section class="bg-white rounded-3xl shadow-lg p-8">
+    <h3 class="text-xl font-semibold mb-4">Cycle Overview</h3>
+
+    <!-- CALENDAR GRID -->
+    <div id="calendar" class="grid grid-cols-7 gap-2 text-center text-sm mb-6"></div>
+
+    <!-- INSIGHTS -->
+    <div id="cycleInfo" class="hidden mt-6 p-5 rounded-2xl bg-rose-50">
+      <h4 class="font-semibold mb-2">Your Cycle Insights</h4>
+      <p id="cycleSummary" class="text-slate-700 text-sm"></p>
+    </div>
+  </section>
+
+</main>
+
+<!-- DISCLAIMER -->
+<footer class="max-w-6xl mx-auto px-6 pb-10 text-xs text-slate-400">
+  This cycle tracker provides educational insights only and does not replace
+  medical advice. Cycle patterns vary between individuals.
+</footer>
+
+<script>
+/* ==========================
+   JAVASCRIPT CYCLE LOGIC
+========================== */
+
+const form = document.getElementById("cycleForm");
+const calendarDiv = document.getElementById("calendar");
+const infoBox = document.getElementById("cycleInfo");
+const summaryText = document.getElementById("cycleSummary");
+
+form.addEventListener("submit", function (e) {
+  e.preventDefault();
+
+  const startDate = new Date(document.getElementById("lastPeriod").value);
+  const cycleLength = parseInt(document.getElementById("cycleLength").value);
+
+  calendarDiv.innerHTML = "";
+
+  const today = new Date();
+  const daysToShow = 35;
+
+  let nextPeriod = new Date(startDate);
+  nextPeriod.setDate(startDate.getDate() + cycleLength);
+
+  for (let i = 0; i < daysToShow; i++) {
+    const day = new Date(startDate);
+    day.setDate(startDate.getDate() + i);
+
+    const cell = document.createElement("div");
+    cell.className = "p-2 rounded-lg";
+
+    if (i < 5) {
+      cell.classList.add("bg-rose-300", "text-white");
+    } else if (day.toDateString() === nextPeriod.toDateString()) {
+      cell.classList.add("bg-emerald-400", "text-white");
+    } else {
+      cell.classList.add("bg-slate-100");
+    }
+
+    cell.innerText = day.getDate();
+    calendarDiv.appendChild(cell);
+  }
+
+  summaryText.innerHTML = `
+    Based on your input, your next expected period may start around
+    <b>${nextPeriod.toDateString()}</b>.
+    Tracking patterns over time can help you better understand your cycle regularity.
+  `;
+
+  infoBox.classList.remove("hidden");
+
+  // OPTIONAL: send data to backend
+  fetch("/save-cycle", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({
+      last_period: startDate,
+      cycle_length: cycleLength
+    })
+  });
+});
+</script>
+
+</body>
+</html>
